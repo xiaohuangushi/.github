@@ -1,0 +1,67 @@
+# github-profile-README.yml
+# github.com/shenjuexiao
+# 20261115
+
+# .github/workflows/github-profile-README.yml
+name: github-profile-README
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'profile/README.md'
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  sync-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout .github repository
+        uses: actions/checkout@v4
+        with:
+          path: dotgithub
+
+      - name: Checkout <org>.github.io repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/${{ github.repository_owner }}.github.io
+          token: ${{ secrets.XIAOHUANGUSHI }}
+          path: github-io
+
+      - name: Copy profile/README.md to .github/README.md
+        run: |
+          cp dotgithub/profile/README.md dotgithub/README.md
+
+      - name: Copy profile/README.md to <org>.github.io/README.md
+        run: |
+          cp dotgithub/profile/README.md github-io/README.md
+
+      - name: Commit & push .github repository
+        run: |
+          cd dotgithub
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit in .github"
+          else
+            git commit -m "chore: sync README.md from profile/README.md"
+            git push
+          fi
+
+      - name: Commit & push <org>.github.io repository
+        run: |
+          cd github-io
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit in <org>.github.io"
+          else
+            git commit -m "chore: sync README.md from .github/profile/README.md"
+            git push
+          fi
